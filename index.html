@@ -82,7 +82,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .drum-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .drum-btn{padding:9px 6px;border-radius:8px;border:0.5px solid #ccc;background:#fff;color:#888;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;min-height:42px}
 .drum-btn.on{background:#fff7e6;color:#BA7517;border-color:#EF9F27;box-shadow:0 0 8px 2px rgba(239,159,39,.4)}
-.drum-btn.dnone{grid-column:span 2}
+.drum-btn.wide{grid-column:span 2}
 /* ── ダイアトニックコード ── */
 .dia-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .dia-btn{padding:8px 4px;border-radius:8px;border:0.5px solid #ccc;background:#fff;cursor:pointer;transition:all .18s;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
@@ -91,10 +91,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .dia-btn.on{background:#fff7e6;border-color:#EF9F27;box-shadow:0 0 8px 2px rgba(239,159,39,.35)}
 .dia-btn.on .dia-name{color:#BA7517}
 .dia-btn.on .dia-deg{color:#EF9F27}
-.drum-edit-tog{width:100%;margin-top:8px;background:#fff;border:0.5px solid #ccc;border-radius:8px;padding:10px 12px;text-align:left;font-size:12px;color:#888;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:42px}
-.drum-edit-tog.on{color:#EF9F27;border-color:#EF9F27}
-.drum-editor-panel{display:none;background:#fafaf7;border:1px solid #ddd;border-radius:8px;padding:10px;margin-top:8px}
-.drum-editor-panel.on{display:block}
+.drum-sw{width:100%;margin-top:8px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px}
+.drum-sw .sw-state{font-weight:500;font-size:11px;opacity:.85}
+.drum-editor-panel{display:block;background:#fafaf7;border:1px solid #ddd;border-radius:8px;padding:10px;margin-top:8px}
 .drum-etip{font-size:11px;color:#999;margin:0 0 8px;line-height:1.5}
 .drum-eleg{display:flex;gap:12px;margin-bottom:8px;flex-wrap:wrap}
 .drum-eli{display:flex;align-items:center;gap:4px;font-size:11px;color:#888}
@@ -115,7 +114,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   .tabs{border-color:#333}
   .tab.active{color:#f0f0f0;border-bottom-color:#f0f0f0}
   .card,.board-card,.current-note-card,.seg-btn,.scale-select,.drum-btn{background:#2a2a2a;border-color:#444;color:#f0f0f0}
-  .drum-edit-tog,.drum-reset{background:#2a2a2a;border-color:#444;color:#ccc}
+  .drum-reset{background:#2a2a2a;border-color:#444;color:#ccc}
+
   .tap-btn{background:#2a2a2a;border-color:#444;color:#f0f0f0}
   .dia-btn{background:#2a2a2a;border-color:#444}
   .dia-btn .dia-name{color:#f0f0f0}
@@ -147,8 +147,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="ctrl-row">
     <span class="ctrl-label">チューニング</span>
     <button class="seg-btn tun active" id="tun-std" onclick="setTuning('std')">標準</button>
-    <button class="seg-btn tun" id="tun-eb" onclick="setTuning('eb')">Eb</button>
-    <button class="seg-btn tun" id="tun-d" onclick="setTuning('d')">D</button>
+    <button class="seg-btn tun" id="tun-eb" onclick="setTuning('eb')">半音下げ</button>
+    <button class="seg-btn tun" id="tun-d" onclick="setTuning('d')">全音下げ</button>
     <button class="seg-btn tun" id="tun-dropd" onclick="setTuning('dropd')">Drop D</button>
   </div>
 
@@ -445,9 +445,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <div style="font-weight:600;margin-bottom:.3rem;color:#1a1a1a">基本の流れ</div>
           <ol style="margin-left:1.2rem;margin-bottom:.75rem">
             <li>チューニングを選択</li>
-            <li>スケール（任意）でルート音とスケール種類を選ぶ</li>
-            <li>ポジション範囲を指定（0〜12F）</li>
-            <li>方向・リピートを設定してスタート</li>
+            <li>練習モードを選ぶ（クロマチック／スケール）</li>
+            <li>クロマチック：開始フレットと音符を決めてスタート</li>
+            <li>スケール：ルート音とスケール種類、ポジション範囲（0〜12F）、方向・リピートを決めてスタート</li>
           </ol>
           <div style="font-weight:600;margin-bottom:.3rem;color:#1a1a1a">指板の操作</div>
           <ul style="margin-left:1.2rem;margin-bottom:.75rem">
@@ -460,6 +460,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
             <li>BPM・拍子・音符・アクセントを設定してスタート</li>
             <li>カウントイン1小節後に自動スタート</li>
             <li>スタート位置スライダーで任意の音から開始できる</li>
+            <li>ドラムは「🥁 ドラム」ボタンでON／OFF。再生中にONにしても次の拍から拍と小節に合わせて入る</li>
+            <li>ドラムのマス目は常に表示。タップして自分のパターンを作れる</li>
             <li>往復モード：上昇→下降→スタート音まで上昇を繰り返す</li>
           </ul>
           <div style="font-weight:600;margin-bottom:.3rem;color:#1a1a1a">表示切替</div>
@@ -475,8 +477,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <!-- 練習モード切替 -->
     <div class="ctrl-row">
       <span class="ctrl-label">練習モード</span>
-      <button class="seg-btn dir active" id="pmode-normal" onclick="setPracticeMode('normal')">スケール</button>
-      <button class="seg-btn dir" id="pmode-chromatic" onclick="setPracticeMode('chromatic')">クロマチック</button>
+      <button class="seg-btn dir active" id="pmode-chromatic" onclick="setPracticeMode('chromatic')">クロマチック</button>
+      <button class="seg-btn dir" id="pmode-normal" onclick="setPracticeMode('normal')">スケール</button>
     </div>
 
     <!-- クロマチック設定（クロマチックモード時のみ） -->
@@ -672,11 +674,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <button class="drum-btn" data-drum="beat16" onclick="setDrum('beat16')">16ビート</button>
         <button class="drum-btn" data-drum="shuffle8" onclick="setDrum('shuffle8')">8シャッフル</button>
         <button class="drum-btn" data-drum="shuffle16" onclick="setDrum('shuffle16')">16シャッフル</button>
-        <button class="drum-btn" data-drum="triplet8" onclick="setDrum('triplet8')">トリプレット</button>
-        <button class="drum-btn on dnone" data-drum="none" onclick="setDrum('none')">ドラムなし</button>
+        <button class="drum-btn wide" data-drum="triplet8" onclick="setDrum('triplet8')">トリプレット</button>
       </div>
-      <div style="font-size:11px;color:#888;margin-top:.5rem;line-height:1.5">🥁 スタートで再生に合わせて鳴ります（メトロノームBPM・拍子に同期）。</div>
-      <button id="drum-edit-tog" class="drum-edit-tog" onclick="toggleDrumEditor()">パターン作成 <span id="drum-edit-arrow">▷</span></button>
+      <button class="drum-btn drum-sw" id="drum-mute" onclick="toggleDrumMute()" aria-pressed="false">🥁 ドラム <span class="sw-state" id="drum-sw-state">OFF</span></button>
+      <div id="drum-status" style="font-size:11px;color:#888;margin-top:.5rem;line-height:1.5"></div>
       <div id="drum-editor-panel" class="drum-editor-panel">
         <p class="drum-etip">セルをタップして ON/OFF。編集すると次のループから反映されます。拍子は上の設定に追従します。</p>
         <div class="drum-eleg">
@@ -830,7 +831,7 @@ let barrePlaced=false,barreFret=1,barreFrom=5,barreTo=0;
 let barreDragging=false,barreStartSi=-1,barreStartFi=-1,barreMoved=false,lastBarreDragEnd=0;
 const barreSelKeys=new Set(); // セーハが自動選択した音（移動・解除時に整理）
 let practiceSeq=[],practiceIdx=0,seqDone=false;
-let currentBeat=0,subBeat=0;
+let currentBeat=0,subBeat=0,beatSub=0; // beatSub: 拍の中の位置（表示・アクセント用）
 let actx=null,nextNoteTime=0,schedTimer=null,countTimer=null;
 let hlPos=null;
 let countAnimId=null,countBeatIdx=0,countBeatStartMs=0,countBeatDurMs=0;
@@ -1709,7 +1710,7 @@ function startPlay(countEndT){
     const upPart2=notes2.slice(1,si2+1);
     practiceSeq.splice(practiceSeq.length-1,1,...upPart2);
   }
-  practiceIdx=chromaticMode?0:startIdx;currentBeat=0;subBeat=0;patternStep=0;
+  practiceIdx=chromaticMode?0:startIdx;currentBeat=0;subBeat=0;beatSub=0;patternStep=0;
   document.getElementById('current-note-card').className='current-note-card show';
   nextNoteTime=countEndT!==undefined?countEndT:actx.currentTime+0.05;
   // ドラム発進（メトロノームと同時刻・同一actxクロック）
@@ -1729,7 +1730,7 @@ function stopPlay(){
   document.getElementById('play-btn').classList.remove('playing');
   document.getElementById('current-note-card').className='current-note-card';
   for(let i=0;i<beats;i++){const d=document.getElementById('dot-'+i);if(d)d.classList.remove('on','acc');}
-  hlPos=null;currentBeat=0;subBeat=0;patternStep=0;
+  hlPos=null;currentBeat=0;subBeat=0;beatSub=0;patternStep=0;
   render();
 }
 
@@ -1744,9 +1745,10 @@ const DRUM_DEFS={
   shuffle16:{steps:24,div:6,HH:[1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1],SN:[0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],BD:[1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0]},
   triplet8: {steps:12,div:3,HH:[1,1,1,1,1,1,1,1,1,1,1,1],SN:[0,0,0,1,0,0,0,0,0,1,0,0],BD:[1,0,0,0,0,0,1,0,0,0,0,0]},
 };
-let dpat='none',drumDs=0,drumNextT=0,drumTimer=null;
+let dpat='beat8',drumDs=0,drumNextT=0,drumTimer=null;
+let drumMuted=true; // 「鳴らさない」を押している間だけ true（起動時は鳴らさない）
 // エディタ状態
-let useCustom=false,editorOpen=false,drumCur=-1;
+let useCustom=false,editorOpen=true,drumCur=-1; // 編集グリッドは常時表示
 const CP={}; // dpatごとのカスタムグリッド {div,HH[],SN[],BD[]}（拍数×div）
 const customized=new Set(); // 編集済みパターン名（再選択時に編集版を復元）
 
@@ -1765,33 +1767,157 @@ function ensureCP(){
   return CP[p];
 }
 
-// ドラム音源（純Web Audio合成・actx使用）
+// ═══ ドラムの音作り（ことりノームと同じ音源）═══
+// 生成した音を使い回せるよう、ノイズは毎回作らずキャッシュする。
+var _drumNoise=null,_drumNoiseCtx=null;
+function drumNoise(){
+  if(_drumNoise&&_drumNoiseCtx===actx) return _drumNoise;
+  var len=Math.floor(actx.sampleRate*0.5);
+  var buf=actx.createBuffer(1,len,actx.sampleRate),d=buf.getChannelData(0);
+  for(var i=0;i<len;i++) d[i]=Math.random()*2-1;
+  _drumNoise=buf;_drumNoiseCtx=actx;
+  return buf;
+}
+function noiseSource(t,dur){
+  var s=actx.createBufferSource();
+  s.buffer=drumNoise();
+  s.loop=true;
+  s.start(t);s.stop(t+dur);
+  return s;
+}
+var _drumBus=null,_drumBusCtx=null;
+function getDrumBus(){
+  if(_drumBus&&_drumBusCtx===actx) return _drumBus;
+  _drumBus=actx.createGain();
+  _drumBus.gain.value=1.0;
+  _drumBus.connect(actx.destination);
+  _drumBusCtx=actx;
+  return _drumBus;
+}
+
 function mdrm(t,type){
   if(!actx)return;
+  var bus=getDrumBus();
   if(type==='bd'){
-    const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);
-    o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(40,t+0.1);
-    g.gain.setValueAtTime(0.8,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.15);
-    o.start(t);o.stop(t+0.2);
+    // 生のバスドラムに寄せた作り。
+    // 低音を薄くし、そのぶん胴の「コン」とビーターの「コッ」で輪郭を出す。
+    var bus2=actx.createGain();bus2.gain.value=0.9;
+    var hpf=actx.createBiquadFilter();               // 50Hz以下を落として重さを抜く
+    hpf.type='highpass';hpf.frequency.value=52;hpf.Q.value=0.7;
+    hpf.connect(bus2);bus2.connect(bus);
+
+    // 芯：落ち方を速くし、着地を高めに取る（低く長く伸ばすと電子音に寄る）
+    var o=actx.createOscillator(),g=actx.createGain();
+    o.type='sine';
+    o.frequency.setValueAtTime(180,t);
+    o.frequency.exponentialRampToValueAtTime(72,t+0.022);
+    o.frequency.exponentialRampToValueAtTime(57,t+0.10);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.72,t+0.004);
+    g.gain.exponentialRampToValueAtTime(0.20,t+0.055);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.19); // 余韻は短めに
+    o.connect(g);g.connect(hpf);
+    o.start(t);o.stop(t+0.24);
+
+    // 胴鳴り：300Hz付近の短い成分。これがあると木の胴らしさが出る
+    var ob=actx.createOscillator(),gb=actx.createGain();
+    ob.type='triangle';
+    ob.frequency.setValueAtTime(320,t);
+    ob.frequency.exponentialRampToValueAtTime(190,t+0.03);
+    gb.gain.setValueAtTime(0.22,t);
+    gb.gain.exponentialRampToValueAtTime(0.001,t+0.055);
+    ob.connect(gb);gb.connect(bus2);
+    ob.start(t);ob.stop(t+0.07);
+
+    // アタック：ビーターが当たる音
+    var ns=noiseSource(t,0.03),nf=actx.createBiquadFilter(),nf2=actx.createBiquadFilter(),ng=actx.createGain();
+    nf.type='bandpass';nf.frequency.value=3600;nf.Q.value=0.8;
+    nf2.type='highpass';nf2.frequency.value=1200;
+    ng.gain.setValueAtTime(0.42,t);
+    ng.gain.exponentialRampToValueAtTime(0.001,t+0.026);
+    ns.connect(nf);nf.connect(nf2);nf2.connect(ng);ng.connect(bus2);
+
   } else if(type==='sn'){
-    const buf=actx.createBuffer(1,Math.floor(actx.sampleRate*0.1),actx.sampleRate),d=buf.getChannelData(0);
-    for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
-    const s=actx.createBufferSource(),g=actx.createGain();s.buffer=buf;s.connect(g);g.connect(actx.destination);
-    g.gain.setValueAtTime(0.4,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.1);
-    s.start(t);s.stop(t+0.15);
-  } else if(type==='hh'){
-    const buf=actx.createBuffer(1,Math.floor(actx.sampleRate*0.05),actx.sampleRate),d=buf.getChannelData(0);
-    for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*0.3;
-    const s=actx.createBufferSource(),f=actx.createBiquadFilter(),g=actx.createGain();
-    f.type='highpass';f.frequency.value=7000;s.buffer=buf;s.connect(f);f.connect(g);g.connect(actx.destination);
-    g.gain.setValueAtTime(0.25,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.05);
-    s.start(t);s.stop(t+0.08);
+    // 胴：2本の三角波。少しだけピッチが落ちる
+    [[188,0.30],[336,0.18]].forEach(function(v){
+      var o=actx.createOscillator(),g=actx.createGain();
+      o.type='triangle';
+      o.frequency.setValueAtTime(v[0],t);
+      o.frequency.exponentialRampToValueAtTime(v[0]*0.82,t+0.09);
+      g.gain.setValueAtTime(v[1],t);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+      o.connect(g);g.connect(bus);
+      o.start(t);o.stop(t+0.14);
+    });
+    // スナッピー：帯域を絞ったノイズ。胴より長く残す
+    var s1=noiseSource(t,0.22),hp=actx.createBiquadFilter(),bp=actx.createBiquadFilter(),g1=actx.createGain();
+    hp.type='highpass';hp.frequency.value=1400;
+    bp.type='bandpass';bp.frequency.value=4200;bp.Q.value=0.55;
+    g1.gain.setValueAtTime(0.0001,t);
+    g1.gain.exponentialRampToValueAtTime(0.62,t+0.002);
+    g1.gain.exponentialRampToValueAtTime(0.12,t+0.06);
+    g1.gain.exponentialRampToValueAtTime(0.001,t+0.20); // 響き線の余韻
+    s1.connect(hp);hp.connect(bp);bp.connect(g1);g1.connect(bus);
+
+  } else if(type==='hh'||type==='hhs'){
+    // 金属の濁り：周波数比の揃わない矩形波6本をバンドパスに通す
+    var open=(type==='hh'),dur=open?0.075:0.045;
+    var ratios=[2,3,4.16,5.43,6.79,8.21],base=open?318:404;
+    var bp2=actx.createBiquadFilter(),hp2=actx.createBiquadFilter(),g2=actx.createGain();
+    bp2.type='bandpass';bp2.frequency.value=open?9200:11000;bp2.Q.value=0.7;
+    hp2.type='highpass';hp2.frequency.value=open?7400:9500;
+    g2.gain.setValueAtTime(0.0001,t);
+    g2.gain.exponentialRampToValueAtTime(open?0.30:0.13,t+0.002);
+    g2.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    ratios.forEach(function(r){
+      var o=actx.createOscillator();
+      o.type='square';o.frequency.value=base*r;
+      o.connect(bp2);o.start(t);o.stop(t+dur+0.02);
+    });
+    bp2.connect(hp2);hp2.connect(g2);g2.connect(bus);
   }
+}
+
+// ドラム1拍あたりの刻み数
+function drumDiv(){
+  if(useCustom&&CP[dpat])return CP[dpat].div;
+  const d=DRUM_DEFS[dpat];
+  return d?d.div:1;
+}
+
+// メトロノームが次に刻む「拍の切れ目」の時刻と、それが小節の何拍目かを返す
+function nextBeatInfo(){
+  const pat=notePattern();
+  const useDiv=chromaticMode?crNoteDiv:noteDiv;
+  let t=nextNoteTime,beat=currentBeat;
+  if(beatSub!==0){
+    for(let i=0;i<useDiv-beatSub;i++)t+=pat[(patternStep+i)%pat.length];
+    beat=(beat+1)%beats;
+  }
+  return {t,beat};
+}
+
+// 再生中にドラムを付けたとき：次の拍の切れ目から、小節内の位置を合わせて入る
+function alignDrumsToBeat(){
+  if(!playing||dpat==='none'||drumMuted)return;
+  if(useCustom)ensureCP();
+  const nb=nextBeatInfo();
+  drumNextT=nb.t;
+  drumDs=nb.beat*drumDiv();
+}
+
+// 繰り返しで小節の頭が戻ったとき：鳴らす時刻は動かさず、小節内の位置だけ合わせる
+function realignDrumBar(){
+  if(!playing||dpat==='none'||drumMuted||!drumTimer)return;
+  const div=drumDiv(),len=beats*div,bi=60/bpm;
+  const nb=nextBeatInfo();
+  const st=Math.round((drumNextT-nb.t)/bi*div)+nb.beat*div;
+  drumDs=((st%len)+len)%len;
 }
 
 // ドラムスケジューラ（メトロノームの四分パルス＝60/bpm に同期）
 function scheduleDrums(){
-  if(!playing||dpat==='none'){drumTimer=null;return;}
+  if(!playing||dpat==='none'||drumMuted){drumTimer=null;return;}
   const now=actx.currentTime;
   const bi=60/bpm;     // 四分音符＝メトロノームのクリック間隔
   const b=beats;
@@ -1878,15 +2004,28 @@ function hlDrumStep(s){
   drumCur=s;
   document.querySelectorAll('#drum-tbl .ec').forEach(td=>td.classList.toggle('cur',parseInt(td.dataset.s)===s));
 }
-function toggleDrumEditor(){
-  editorOpen=!editorOpen;
-  document.getElementById('drum-editor-panel').classList.toggle('on',editorOpen);
-  document.getElementById('drum-edit-tog').classList.toggle('on',editorOpen);
-  document.getElementById('drum-edit-arrow').textContent=editorOpen?'▼':'▷';
-  if(editorOpen){
-    if(dpat==='none')setDrum('beat8'); // 編集対象が無いと空になるため既定パターンを選択
-    renderDrumGrid();
+// ドラムを鳴らす／鳴らさない（グリッドの形と選んだパターンはそのまま残る）
+function toggleDrumMute(){
+  drumMuted=!drumMuted;
+  updateDrumMute();
+  if(!playing)return;
+  if(drumMuted){
+    if(drumTimer){clearTimeout(drumTimer);drumTimer=null;}
+    drumCur=-1;document.querySelectorAll('#drum-tbl .ec.cur').forEach(td=>td.classList.remove('cur'));
+  } else if(!drumTimer){
+    alignDrumsToBeat();scheduleDrums(); // 次の拍に合わせて合流
   }
+}
+function updateDrumMute(){
+  const on=!drumMuted;
+  const btn=document.getElementById('drum-mute');
+  if(btn){btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on?'true':'false');}
+  const sw=document.getElementById('drum-sw-state');
+  if(sw)sw.textContent=on?'ON':'OFF';
+  const st=document.getElementById('drum-status');
+  if(st)st.textContent=on
+    ? 'スタートで再生に合わせて鳴ります（メトロノームのBPM・拍子に同期）。'
+    : 'いまは鳴りません。上のボタンを押すとONになります。';
 }
 function resetDrumPattern(){
   if(dpat==='none')return;
@@ -1896,10 +2035,10 @@ function resetDrumPattern(){
 // パターン選択（再生中の切替にも対応）
 function setDrum(p){
   dpat=p;useCustom=customized.has(p); // 編集済みなら編集版を復元（グリッドと音を一致）
-  document.querySelectorAll('.drum-btn').forEach(b=>b.classList.toggle('on',b.dataset.drum===p));
+  document.querySelectorAll('.drum-btn[data-drum]').forEach(b=>b.classList.toggle('on',b.dataset.drum===p));
   if(editorOpen)renderDrumGrid();
-  // 再生中になし→パターンへ切替えたらスケジューラを再起動
-  if(playing&&p!=='none'&&!drumTimer){drumNextT=actx.currentTime+0.06;scheduleDrums();}
+  // 再生中になし→パターンへ切替えたら、次の拍に合わせてスケジューラを再起動
+  if(playing&&p!=='none'&&!drumMuted&&!drumTimer){alignDrumsToBeat();scheduleDrums();}
 }
 
 function schedule(){
@@ -1942,7 +2081,8 @@ function schedule(){
                 crCurrentStart++;
                 buildChromaticSeq();
                 practiceIdx=0;
-                subBeat=0;currentBeat=0;patternStep=0;
+                subBeat=0;beatSub=0;currentBeat=0;patternStep=0;
+                realignDrumBar();
               } else {
                 // 全サイクル完了→終了
                 setTimeout(()=>{
@@ -1966,7 +2106,8 @@ function schedule(){
               }
               const nextIdx=startIdx+1<practiceSeq.length?startIdx+1:startIdx;
               practiceIdx=nextIdx;
-              subBeat=0;currentBeat=0;patternStep=0;
+              subBeat=0;beatSub=0;currentBeat=0;patternStep=0;
+              realignDrumBar();
             }
           } else setTimeout(()=>stopPlay(),spn*1000+100);
         }
@@ -1977,8 +2118,10 @@ function schedule(){
     if(subBeat===0){
       if(!isEnd||repeatMode||(chromaticMode&&crCurrentStart<=9))practiceIdx=Math.min(practiceIdx+1,practiceSeq.length-1);
       if(repeatMode&&isEnd&&!chromaticMode)practiceIdx=startIdx;
-      currentBeat=(currentBeat+1)%beats;
     }
+    // 拍の進み。クロマチックで8分を選んでも1拍は4分音符のまま保つ
+    beatSub=(beatSub+1)%(chromaticMode?crNoteDiv:noteDiv);
+    if(beatSub===0)currentBeat=(currentBeat+1)%beats;
     nextNoteTime+=spn;
     if(isEnd&&!repeatMode&&!chromaticMode){seqDone=true;break;}
     if(isEnd&&chromaticMode&&crCurrentStart>9){seqDone=true;break;}
@@ -2655,6 +2798,8 @@ setLang('en');
 setRepeat(false);
 autoSelectAll();
 buildSeq();updateSelCount();updateStartSlider();updateAllStrBtn();updateVoicingPlayBtn();
+setPracticeMode('chromatic'); // 起動時の練習モード
+setDrum(dpat);updateDrumMute(); // ドラムは既定パターンを選んだ状態で、鳴らさないから始める
 render();
 setupBarreDrag();
 updateBarreUI();
