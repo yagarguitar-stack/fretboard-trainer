@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>フレットボードトレーナー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+Antique:wght@400;500&family=Cormorant+Garamond:ital,wght@1,500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh;padding:1rem}
@@ -133,6 +134,171 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   .s-bg{background:#444}.slider-val{color:#f0f0f0}.note-it{color:#666}
   .slider-outer input[type=range]::-webkit-slider-thumb{background:#f0f0f0}
 }
+
+/* ══════════════════════════════════════════════════════════════
+   モチーフ層「指板の星図」（2026-10）
+   仕組みと配置には触れず、色・形・飾りだけをここで上書きする。
+   ・地は夜空（紺の濃淡）。全体に天球の座標線と、ゆっくり瞬く星
+   ・枠は細い金の線に、角の ✦。押せる物は丸い札、選ばれた物は金で塗る
+   ・指板はエボニー、音は光る星。範囲・開始位置・拍の印は金
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --sky0:#070a18; --sky1:#0d1226; --sky2:#1d2550;
+  --star:#dcd6f5; --dim:#9d97c2; --faint:rgba(220,214,245,.5);
+  --gold:#f1e4b8; --goldL:rgba(241,228,184,.35); --goldF:rgba(241,228,184,.14);
+  --panel:rgba(9,13,30,.62);
+}
+html{ background:var(--sky0); }
+body,body{ background:radial-gradient(ellipse at 50% -10%,var(--sky2) 0%,var(--sky1) 50%,var(--sky0) 100%) fixed;
+  color:var(--star); font-family:'Zen Kaku Gothic Antique',-apple-system,BlinkMacSystemFont,sans-serif; }
+#atlas-sky{ position:fixed; inset:0; z-index:0; pointer-events:none; }
+#atlas-sky svg{ width:100%; height:100%; }
+#atlas-sky .tw{ animation:atlasTw 3.2s ease-in-out infinite; }
+@keyframes atlasTw{ 0%,100%{opacity:.2} 50%{opacity:.9} }
+#app{ position:relative; z-index:1; }
+
+/* 題字 */
+.app-title{ text-align:center; margin:.4rem 0 1rem; }
+.app-title .at-en{ display:block; font-family:'Cormorant Garamond',Georgia,serif; font-style:italic; font-weight:500;
+  font-size:30px; color:var(--gold); letter-spacing:.04em; text-shadow:0 0 14px rgba(241,228,184,.35); line-height:1.1; }
+.app-title .at-ja{ display:block; font-size:10px; letter-spacing:.42em; color:var(--dim); margin-top:4px; }
+
+/* タブ */
+.tabs{ border-bottom:1px solid var(--goldL); justify-content:center; gap:28px; }
+.tab{ flex:0 0 auto; padding:8px 4px; color:var(--dim); font-size:13px; letter-spacing:.15em; }
+.tab.active{ color:var(--gold); border-bottom-color:var(--gold); }
+.tab.active::before{ content:'✦ '; font-size:10px; }
+
+/* 枠：細い金の線と角の ✦ */
+.card,.board-card,.current-note-card{ position:relative; background:var(--panel); border:1px solid var(--goldL);
+  border-radius:6px; color:var(--star); }
+.card::before,.board-card::before,.current-note-card::before,
+.card::after,.board-card::after,.current-note-card::after{ content:'✦'; position:absolute; font-size:10px; color:var(--gold); opacity:.75; line-height:1; }
+.card::before,.board-card::before,.current-note-card::before{ top:-6px; left:12px; }
+.card::after,.board-card::after,.current-note-card::after{ bottom:-6px; right:12px; }
+.card-label{ color:var(--gold); letter-spacing:.22em; font-size:11px; }
+.ctrl-label,.board-hint,.sel-count,.sel-hint,.slider-labels,.bpm-unit,.note-sub,
+.scale-info-text,.chord-info-text,.board-info,.drum-etip,.drum-eli{ color:var(--dim) !important; }
+.scale-legend-item,.chord-legend-item{ color:var(--star); }
+.slider-val{ color:var(--gold); }
+
+/* 札（ボタン）：丸い札、選ばれた物は金 */
+.seg-btn,.seg-btn.tun,.seg-btn.acc,.seg-btn.dir,.seg-btn.tog,.seg-btn.lang,.seg-btn.view{
+  background:transparent; color:var(--star); border:1px solid var(--goldL); border-radius:20px; box-shadow:none; }
+.seg-btn.tun.active,.seg-btn.acc.active,.seg-btn.dir.active,.seg-btn.tog.active,.seg-btn.lang.active,.seg-btn.view.active{
+  background:var(--gold); color:var(--sky1); border-color:var(--gold); box-shadow:0 0 10px rgba(241,228,184,.35); }
+.sel-reset-btn{ background:transparent; color:#f3a6a6; border:1px solid rgba(243,166,166,.45); border-radius:20px; }
+.sel-reset-btn:hover{ background:rgba(243,166,166,.12); }
+.scale-select{ background:rgba(13,18,38,.9); color:var(--star); border:1px solid var(--goldL); border-radius:4px; }
+.scale-select option,.scale-select optgroup{ background:#0d1226; color:var(--star); }
+.scale-select:focus{ border-color:var(--gold); }
+
+/* つまみ */
+.s-bg{ background:rgba(220,214,245,.18); height:2px; }
+.s-fill{ height:2px; background:var(--gold) !important; box-shadow:0 0 6px rgba(241,228,184,.5); }
+#start-fill{ background:#ffc98a !important; }
+.slider-outer input[type=range]::-webkit-slider-thumb{ background:var(--gold); border:2px solid var(--sky1); box-shadow:0 0 8px rgba(241,228,184,.6); }
+.slider-outer input[type=range]::-moz-range-thumb{ background:var(--gold); border:2px solid var(--sky1); }
+
+/* スタート・拍の印 */
+.play-btn{ background:transparent; color:var(--gold); border:1px solid var(--gold); border-radius:24px; letter-spacing:.25em;
+  box-shadow:0 0 14px rgba(241,228,184,.2); }
+.play-btn:hover{ opacity:1; background:var(--goldF); }
+.play-btn.playing{ background:var(--gold); color:var(--sky1); }
+.beat-dot{ background:transparent; border:1px solid var(--goldL); }
+.beat-dot.on{ background:var(--gold); border-color:var(--gold); box-shadow:0 0 8px var(--gold); }
+.beat-dot.acc{ background:#ffd98a; border-color:#ffd98a; box-shadow:0 0 12px #ffd98a; }
+
+/* メトロノーム */
+.bpm-display{ font-family:'Cormorant Garamond',Georgia,serif; font-size:40px; color:var(--gold); }
+.tap-btn{ background:transparent; color:var(--gold); border:1px solid var(--goldL); border-radius:20px; }
+.tap-btn:active,.tap-btn.flash{ background:var(--gold); color:var(--sky1); border-color:var(--gold); }
+.drum-btn{ background:transparent; color:var(--star); border:1px solid var(--goldL); border-radius:20px; }
+.drum-btn.on{ background:var(--gold); color:var(--sky1); border-color:var(--gold); box-shadow:0 0 10px rgba(241,228,184,.35); }
+.drum-editor-panel{ background:rgba(7,10,24,.6); border:1px solid rgba(241,228,184,.2); border-radius:4px; }
+.drum-etbl th,.drum-etbl .erl{ color:var(--dim); }
+.drum-etbl .ec{ background:rgba(220,214,245,.08); border-color:rgba(220,214,245,.2); }
+.drum-etbl .ec.b1{ border-left-color:var(--goldL) !important; }
+.drum-etbl .ec.cur{ outline-color:var(--gold); }
+.drum-reset{ background:transparent; color:var(--dim); border:1px solid var(--goldL); border-radius:20px; }
+
+/* たためるメトロノーム */
+#practice-metro .card-label.at-fold{ cursor:pointer; user-select:none; display:flex; align-items:baseline; gap:10px; margin-bottom:0 !important; }
+#practice-metro .at-sum{ color:var(--star); letter-spacing:.05em; font-size:12px; }
+#practice-metro .at-sum b{ font-family:'Cormorant Garamond',Georgia,serif; font-size:20px; color:var(--gold); font-weight:500; margin-right:2px; }
+#practice-metro .at-arrow{ margin-left:auto; transition:transform .25s; }
+#practice-metro.at-open .at-arrow{ transform:rotate(180deg); }
+#practice-metro .at-body{ display:none; margin-top:.75rem; }
+#practice-metro.at-open .at-body{ display:block; animation:atlasIn .35s ease-out; }
+@keyframes atlasIn{ from{opacity:0; transform:translateY(-4px)} to{opacity:1; transform:none} }
+
+/* 今の音 */
+.note-en{ font-family:'Cormorant Garamond',Georgia,serif; color:var(--gold); text-shadow:0 0 16px rgba(241,228,184,.4); }
+.note-it{ color:var(--dim); }
+
+/* ダイアトニック */
+.dia-btn{ background:transparent; border:1px solid var(--goldL); border-radius:6px; }
+.dia-btn .dia-name{ color:var(--star); }
+.dia-btn .dia-deg{ color:var(--dim); }
+.dia-btn.on{ background:var(--gold); border-color:var(--gold); box-shadow:0 0 10px rgba(241,228,184,.35); }
+.dia-btn.on .dia-name,.dia-btn.on .dia-deg{ color:var(--sky1); }
+#id-name{ color:var(--gold) !important; font-family:'Cormorant Garamond',Georgia,serif; font-size:32px !important; font-weight:500 !important; }
+#capo-sounding{ color:var(--gold) !important; }
+
+/* 書き込みの色（説明の中の文字）を夜空に合わせる */
+#app [style*="color:#1a1a1a"]{ color:var(--gold) !important; }
+#app [style*="color:#555"],#app [style*="color:#333"]{ color:var(--star) !important; }
+#app [style*="color:#888"],#app [style*="color:#999"],#app [style*="color:#aaa"]{ color:var(--dim) !important; }
+
+/* 星座盤（スケールの主音を選ぶ円） */
+.at-dial-wrap{ display:flex; justify-content:center; margin:.2rem 0 .6rem; }
+.at-dial-wrap{ flex-direction:column; align-items:center; gap:6px; }
+.at-dial{ width:200px; max-width:70%; }
+.at-dial.at-keys{ width:280px; max-width:92%; }
+.at-view{ display:flex; border:1px solid var(--goldL); border-radius:20px; overflow:hidden; }
+.at-view button{ all:unset; cursor:pointer; padding:3px 14px; font-size:11px; color:var(--dim); letter-spacing:.1em; }
+.at-view button.on{ background:var(--gold); color:var(--sky1); }
+.at-dial g[data-i]{ cursor:pointer; }
+.at-dial g[data-i]:hover circle.at-dot{ stroke:var(--gold); }
+
+/* 夜空なので端末の夜の設定は使わない（上の指定を優先） */
+@media(prefers-color-scheme:dark){
+  body{ color:var(--star); }
+  .card,.board-card,.current-note-card{ background:var(--panel); border-color:var(--goldL); color:var(--star); }
+  .seg-btn,.drum-btn{ background:transparent; border-color:var(--goldL); color:var(--star); }
+  .scale-select{ background:rgba(13,18,38,.9); border-color:var(--goldL); color:var(--star); }
+  .play-btn{ background:transparent; color:var(--gold); }
+  .play-btn.playing{ background:var(--gold); color:var(--sky1); }
+  .beat-dot{ background:transparent; } .beat-dot.on{ background:var(--gold); }
+  .tab.active{ color:var(--gold); border-bottom-color:var(--gold); }
+  .tabs{ border-color:var(--goldL); }
+  .dia-btn{ background:transparent; border-color:var(--goldL); }
+  .dia-btn.on{ background:var(--gold); border-color:var(--gold); }
+  .dia-btn.on .dia-name{ color:var(--sky1); }
+  .tap-btn{ background:transparent; border-color:var(--goldL); color:var(--gold); }
+  .drum-reset{ background:transparent; border-color:var(--goldL); }
+  .drum-editor-panel{ background:rgba(7,10,24,.6); border-color:rgba(241,228,184,.2); }
+  .drum-etbl .ec{ background:rgba(220,214,245,.08); border-color:rgba(220,214,245,.2); }
+  .s-bg{ background:rgba(220,214,245,.18); }
+  .slider-outer input[type=range]::-webkit-slider-thumb{ background:var(--gold); }
+}
+@media (prefers-reduced-motion:reduce){ #atlas-sky .tw{ animation:none; } }
+/* スマホ：指板を横幅いっぱいに近づける */
+@media(max-width:480px){ body{ padding:.6rem; } .board-card{ padding:.9rem .35rem; } }
+
+/* 指板をなぞって範囲を決める */
+#lasso-bar{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:.5rem 0 .4rem; }
+#lasso-info{ font-size:11px; color:var(--dim); }
+#lasso-wrap{ position:relative; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+#lasso-wrap.lasso-on{ touch-action:none; }
+#lasso-wrap.lasso-on #board-svg svg{ cursor:crosshair !important; }
+#lasso-ov{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+#board-svg svg text{ user-select:none; -webkit-user-select:none; }
+#lasso-pane{ display:none; margin-top:.6rem; }
+#lasso-find{ width:100%; padding:8px; font-size:13px; }
+#lasso-err{ font-size:12px; color:#f3a6a6; min-height:16px; margin-top:.35rem; }
+#lasso-res{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+#lasso-res .seg-btn{ font-family:ui-monospace,Menlo,monospace; letter-spacing:.08em; border-radius:6px; }
 </style>
 </head>
 <body>
@@ -2804,6 +2970,367 @@ render();
 setupBarreDrag();
 updateBarreUI();
 renderDiatonic();
+</script>
+<script>
+/* ══ モチーフ層「指板の星図」：飾りと、指板の絵の差し替え（仕組みには触れない） ══ */
+(function(){
+  /* ── 夜空 ── */
+  var sky=document.createElement('div'); sky.id='atlas-sky'; sky.setAttribute('aria-hidden','true');
+  var h='<svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">';
+  for(var i=0;i<110;i++){var x=(i*137)%400,y=(i*89)%800,r=i%11==0?1.5:(i%3==0?.9:.6);
+    h+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#ece8ff" opacity=".5"'+(i%3==0?' class="tw" style="animation-delay:'+((i%9)*.37).toFixed(2)+'s"':'')+'/>';}
+  for(var k=1;k<=5;k++)h+='<ellipse cx="200" cy="420" rx="'+(k*80)+'" ry="'+(k*56)+'" fill="none" stroke="rgba(220,214,245,.06)"'+(k%2?' stroke-dasharray="2 6"':'')+'/>';
+  for(k=0;k<6;k++){var a=k*Math.PI/6;h+='<line x1="'+(200-Math.cos(a)*600)+'" y1="'+(420-Math.sin(a)*420)+'" x2="'+(200+Math.cos(a)*600)+'" y2="'+(420+Math.sin(a)*420)+'" stroke="rgba(220,214,245,.045)"/>';}
+  sky.innerHTML=h+'</svg>'; document.body.insertBefore(sky,document.body.firstChild);
+
+  /* ── 題字 ── */
+  var t=document.querySelector('.app-title');
+  if(t) t.innerHTML='<span class="at-en">Fretboard Trainer</span><span class="at-ja">フレットボードトレーナー</span>';
+
+  /* ── 指板の絵：エボニーの地に光る星 ── */
+  var NOTE_COLS={}; (NC||[]).forEach(function(c){NOTE_COLS[c.toLowerCase()]=1;});
+  Object.keys(DEGREE_COLORS||{}).forEach(function(k){NOTE_COLS[DEGREE_COLORS[k].toLowerCase()]=1;});
+  // いま光っている音が practiceSeq のどれかを、順番どおりに追いかける（往復で同じ位置が2回出ても迷わない）
+  var atIdx=-1, atKey='';
+  function nextNote(){
+    if(!playing||!hlPos||!practiceSeq||!practiceSeq.length){ atIdx=-1; atKey=''; return null; }
+    var key=hlPos.si+'_'+hlPos.fi;
+    if(key!==atKey){
+      atKey=key; var found=-1;
+      for(var k=atIdx+1;k<practiceSeq.length;k++){ var p=practiceSeq[k]; if(p&&p!=='__start__'&&p.si===hlPos.si&&p.fi===hlPos.fi){ found=k; break; } }
+      if(found<0) for(k=0;k<practiceSeq.length;k++){ p=practiceSeq[k]; if(p&&p!=='__start__'&&p.si===hlPos.si&&p.fi===hlPos.fi){ found=k; break; } }
+      atIdx=found;
+    }
+    if(atIdx<0) return null;
+    var nx=practiceSeq[atIdx+1];
+    if(!nx&&repeatMode&&!chromaticMode) nx=practiceSeq[0];
+    if(!nx||nx==='__start__'||(nx.si===hlPos.si&&nx.fi===hlPos.fi)) return null;
+    return [hlPos,nx];
+  }
+  var orig=buildBoardSVG;
+  buildBoardSVG=function(isPractice,isViewer,viewerHighlight,fretOffset){
+    var s=orig.apply(this,arguments);
+    s=s.replace('fill="#8B5035"','fill="#15120f"')
+       .replace(/fill="#D0C8A8"/g,'fill="#8d877c"')
+       .replace(/fill="#E8E0D0"/g,'fill="#cfc6ae"').replace(/fill="#F5F2EA" rx="1"/g,'fill="#efe6cf" rx="1"')
+       .replace(/fill="#B5D4F4" opacity="\.6"/g,'fill="#d8cfb6" opacity=".32"')
+       .replace(/stroke="#(D8D4C8|D0CCC0|D4B84A|C8A83C|BCA030|B09828)"/g,function(m,c){
+          return 'stroke="'+({D8D4C8:'#e6e0f2',D0CCC0:'#ddd6ea',D4B84A:'#d8cfb6',C8A83C:'#cfc5a8',BCA030:'#c6bb9b',B09828:'#bdb28f'})[c]+'" opacity=".85"';})
+       .replace(/fill="#(aaa|bbb|888)"/g,'fill="#9d97c2"')
+       .replace(/#6366f1/g,'#f1e4b8').replace(/#f97316/g,'#f1e4b8').replace(/fill="#60a5fa"/,'fill="#f1e4b8"')
+       .replace(/fill="#2b2b2b" opacity="\.9"/,'fill="#f1e4b8" opacity=".9"').replace(/font-weight="700" fill="#2b2b2b">Capo/,'font-weight="700" fill="#f1e4b8">Capo');
+    // 光る星：音の丸に光をまとわせる
+    var defs='<defs><filter id="atGlow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+      +'<marker id="atArrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f1e4b8"/></marker></defs>';
+    s=s.replace(/(<svg[^>]*>)/,'$1'+defs);
+    s=s.replace(/<circle cx="([^"]+)" cy="([^"]+)" r="([^"]+)" fill="(#[0-9a-fA-F]{6})"( opacity="\.(?:8|9)\d*")?\/>/g,function(m,cx,cy,r,f,op){
+      if(!NOTE_COLS[f.toLowerCase()]||+r<9) return m;
+      return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+f+'"'+(op||'')+' filter="url(#atGlow)"/>';});
+    // 練習中：いま光っている音から、次に弾く音へ矢印（丸と音名には掛からない）
+    if(isPractice && fretOffset!==12){
+      var nx=nextNote();
+      if(nx){
+        var cur=nx[0], nxt=nx[1];
+        var cpt=function(si,fi){ return [fi===0?Sml+4:Sml+(gFp[fi-1]+gFp[fi])/2, Smt+si*SGap]; };
+        var A=cpt(cur.si,cur.fi), B=cpt(nxt.si,nxt.fi), a='';
+        var r0=DR_CUR+5, r1=DR_SEL+6;
+        a+='<circle cx="'+B[0]+'" cy="'+B[1]+'" r="'+(DR_SEL+3.5)+'" fill="none" stroke="#f1e4b8" stroke-width="1.2" stroke-dasharray="2.5 2.5" opacity=".9"/>';
+        if(cur.si===nxt.si){
+          // 同じ弦：弦の上側に小さく弧を描く（間の音を避ける）
+          var dir=B[0]>A[0]?1:-1, dx=Math.abs(B[0]-A[0]), lift=Math.min(16,6+dx*.18);
+          var sx=A[0]+dir*r0*.7, sy=A[1]-r0*.72, ex=B[0]-dir*r1*.7, ey=B[1]-r1*.72;
+          var mx=(sx+ex)/2, my=Math.min(sy,ey)-lift;
+          a+='<path d="M'+sx.toFixed(1)+','+sy.toFixed(1)+' Q'+mx.toFixed(1)+','+my.toFixed(1)+' '+ex.toFixed(1)+','+ey.toFixed(1)+'" fill="none" stroke="#f1e4b8" stroke-width="1.6" stroke-linecap="round" marker-end="url(#atArrow)"/>';
+        } else {
+          var vx=B[0]-A[0], vy=B[1]-A[1], L=Math.hypot(vx,vy)||1, ux=vx/L, uy=vy/L;
+          if(L>r0+r1+4){
+            a+='<line x1="'+(A[0]+ux*r0).toFixed(1)+'" y1="'+(A[1]+uy*r0).toFixed(1)+'" x2="'+(B[0]-ux*r1).toFixed(1)+'" y2="'+(B[1]-uy*r1).toFixed(1)+'" stroke="#f1e4b8" stroke-width="1.6" stroke-linecap="round" marker-end="url(#atArrow)"/>';
+          }
+        }
+        var at=s.lastIndexOf('stroke-width="3.3"');
+        if(at>0){ at=s.indexOf('/>',at)+2; s=s.slice(0,at)+'<g opacity=".95" pointer-events="none">'+a+'</g>'+s.slice(at); }
+      }
+    }
+    return s;
+  };
+
+  /* ── 星座盤：スケールの主音を、12の音を円く並べた盤で選ぶ ── */
+  function dialFor(rootId,typeId,onChange){
+    var rs=document.getElementById(rootId), ts=document.getElementById(typeId); if(!rs||!ts) return null;
+    var wrap=document.createElement('div'); wrap.className='at-dial-wrap';
+    wrap.innerHTML='<div class="at-view"><button type="button" data-v="ring">円</button><button type="button" data-v="keys">鍵盤</button></div>'
+      +'<svg class="at-dial" viewBox="0 0 180 180" role="group" aria-label="主音を選ぶ"></svg>';
+    var row=rs.closest('.scale-row'); row.parentNode.insertBefore(wrap,row);
+    var svg=wrap.querySelector('svg');
+    wrap.querySelectorAll('.at-view button').forEach(function(b){
+      b.addEventListener('click',function(){ atView=b.getAttribute('data-v'); try{localStorage.setItem('fb_at_view',atView);}catch(e){} dials.forEach(function(f){f();}); });
+    });
+    function draw(){
+      wrap.querySelectorAll('.at-view button').forEach(function(b){ b.classList.toggle('on',b.getAttribute('data-v')===atView); });
+      if(atView==='keys'){ drawKeys(); return; }
+      svg.setAttribute('viewBox','0 0 180 180'); svg.classList.remove('at-keys');
+      var root=rs.value===''?null:+rs.value, type=ts.value, iv=(type&&SCALE_DEFS[type])?SCALE_DEFS[type].intervals:[];
+      var c=90,R=60,o='';
+      o+='<circle cx="90" cy="90" r="84" fill="rgba(9,13,30,.6)" stroke="rgba(241,228,184,.35)"/>';
+      o+='<circle cx="90" cy="90" r="'+R+'" fill="none" stroke="rgba(241,228,184,.18)" stroke-dasharray="2 4"/>';
+      for(var i=0;i<12;i++){var a=-Math.PI/2+i*Math.PI/6;o+='<line x1="'+(c+Math.cos(a)*77)+'" y1="'+(c+Math.sin(a)*77)+'" x2="'+(c+Math.cos(a)*84)+'" y2="'+(c+Math.sin(a)*84)+'" stroke="rgba(241,228,184,.4)"/>';}
+      if(root!==null&&iv.length){
+        var pts=iv.map(function(d){var a=-Math.PI/2+((root+d)%12)*Math.PI/6;return (c+Math.cos(a)*R).toFixed(1)+','+(c+Math.sin(a)*R).toFixed(1);}).join(' ');
+        o+='<polygon points="'+pts+'" fill="rgba(241,228,184,.06)" stroke="#f1e4b8" stroke-width=".9" opacity=".75"/>';
+      }
+      for(i=0;i<12;i++){
+        var a=-Math.PI/2+i*Math.PI/6,x=c+Math.cos(a)*R,y=c+Math.sin(a)*R;
+        var on=root!==null&&iv.indexOf((i-root+12)%12)>=0, isR=i===root, col=NC[i];
+        o+='<g data-i="'+i+'" tabindex="0" role="button" aria-label="主音 '+getBoardLabel(i)+'">';
+        o+='<circle cx="'+x+'" cy="'+y+'" r="15" fill="transparent"/>';
+        if(on) o+='<circle cx="'+x+'" cy="'+y+'" r="13" fill="'+col+'" opacity=".25" filter="url(#atDialGlow)"/>';
+        o+='<circle class="at-dot" cx="'+x+'" cy="'+y+'" r="'+(isR?11:9)+'" fill="'+(on?col:'#1b2142')+'" stroke="'+(isR?'#fff8dc':(on?'none':'rgba(241,228,184,.3)'))+'" stroke-width="1.6"/>';
+        o+='<text x="'+x+'" y="'+(y+3.2)+'" text-anchor="middle" font-size="'+(getBoardLabel(i).length>2?7:8.5)+'" font-weight="600" fill="'+(on?'#fff':'#8f88b5')+'" pointer-events="none">'+getBoardLabel(i)+'</text></g>';
+      }
+      o+='<text x="90" y="88" text-anchor="middle" font-size="22" fill="#f1e4b8" font-family="Cormorant Garamond,Georgia,serif" font-style="italic">'+(root===null?'—':getBoardLabel(root))+'</text>';
+      o+='<text x="90" y="104" text-anchor="middle" font-size="8" fill="#9d97c2" letter-spacing="2">主音</text>';
+      svg.innerHTML='<defs><filter id="atDialGlow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="3"/></filter></defs>'+o;
+      bind();
+    }
+    function drawKeys(){
+      var root=rs.value===''?null:+rs.value, type=ts.value, iv=(type&&SCALE_DEFS[type])?SCALE_DEFS[type].intervals:[];
+      svg.setAttribute('viewBox','0 0 252 120'); svg.classList.add('at-keys');
+      var W=[0,2,4,5,7,9,11], B={1:0,3:1,6:3,8:4,10:5}, kw=34, x0=7, y0=22, o='';
+      function on(i){ return root!==null&&iv.indexOf((i-root+12)%12)>=0; }
+      function key(i,x,y,w,h,black){
+        var isOn=on(i), isR=i===root, col=NC[i];
+        var fill=isOn?col:(black?'#0b0f22':'#1b2142');
+        var g='<g data-i="'+i+'" tabindex="0" role="button" aria-label="主音 '+getBoardLabel(i)+'">';
+        if(isOn) g+='<rect x="'+(x-2)+'" y="'+(y-2)+'" width="'+(w+4)+'" height="'+(h+4)+'" rx="4" fill="'+col+'" opacity=".3" filter="url(#atDialGlow)"/>';
+        g+='<rect class="at-dot" x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="3" fill="'+fill+'" stroke="'+(isR?'#fff8dc':'rgba(241,228,184,.4)')+'" stroke-width="'+(isR?2:1)+'"/>';
+        var lbl=getBoardLabel(i);
+        g+='<text x="'+(x+w/2)+'" y="'+(y+h-8)+'" text-anchor="middle" font-size="'+(black?(lbl.length>2?6:7.5):(lbl.length>2?7:9))+'" font-weight="600" fill="'+(isOn?'#fff':'#8f88b5')+'" pointer-events="none">'+lbl+'</text>';
+        if(isR) g+='<text x="'+(x+w/2)+'" y="'+(y-5)+'" text-anchor="middle" font-size="8" fill="#f1e4b8" pointer-events="none">主音</text>';
+        return g+'</g>';
+      }
+      W.forEach(function(n,k){ o+=key(n,x0+k*kw,y0,kw-2,88,false); });
+      Object.keys(B).forEach(function(n){ var k=B[n]; o+=key(+n,x0+(k+1)*kw-11,y0,20,54,true); });
+      svg.innerHTML='<defs><filter id="atDialGlow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="3"/></filter></defs>'+o;
+      bind();
+    }
+    function bind(){
+      svg.querySelectorAll('g[data-i]').forEach(function(g){
+        function pick(){ rs.value=g.getAttribute('data-i'); if(ts.value===''&&ts.querySelector('option[value="major"]')) ts.value='major'; onChange(); draw(); }
+        g.addEventListener('click',pick);
+        g.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); pick(); } });
+      });
+    }
+    rs.addEventListener('change',draw); ts.addEventListener('change',draw);
+    draw(); return draw;
+  }
+  var dials=[], atView='ring';
+  try{ var _v=localStorage.getItem('fb_at_view'); if(_v==='keys'||_v==='ring') atView=_v; }catch(e){}
+  var d1=dialFor('vscale-root','vscale-type',function(){onViewerScaleChange();}); if(d1) dials.push(d1);
+  var d2=dialFor('scale-root','scale-type',function(){onScaleChange();});         if(d2) dials.push(d2);
+  // ♯／♭、音名の言葉を替えた時も盤の文字を合わせる
+  var origRender=render;
+  render=function(){ var r=origRender.apply(this,arguments); dials.forEach(function(f){f();}); return r; };
+
+  /* ── メトロノーム：たためる帯に ── */
+  var pm=document.getElementById('practice-metro'), card=pm&&pm.querySelector('.card'), lab=card&&card.querySelector('.card-label');
+  if(card&&lab){
+    var body=document.createElement('div'); body.className='at-body';
+    while(lab.nextSibling) body.appendChild(lab.nextSibling);
+    card.appendChild(body);
+    lab.classList.add('at-fold'); lab.setAttribute('role','button'); lab.setAttribute('tabindex','0'); lab.setAttribute('aria-expanded','false');
+    lab.innerHTML='メトロノーム<span class="at-sum" id="at-sum"></span><span class="at-arrow">▾</span>';
+    function toggle(){ var o=pm.classList.toggle('at-open'); lab.setAttribute('aria-expanded',o?'true':'false'); }
+    lab.addEventListener('click',toggle);
+    lab.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } });
+    function sum(){
+      var bpm=(document.getElementById('bpm-display')||{}).textContent||'';
+      var bt=document.querySelector('[id^="beats-"].active'), nt=document.querySelector('[id^="note-"].active');
+      var dr=document.querySelector('.drum-btn.on[data-drum]'), ds=(document.getElementById('drum-sw-state')||{}).textContent||'';
+      var s='<b>♩ '+bpm+'</b>'+(bt?bt.textContent:'')+(nt?'　'+nt.textContent.replace(/^[♩♪♬]/,''):'')+'　ドラム '+(ds.trim()==='ON'&&dr?dr.textContent:'なし');
+      var el=document.getElementById('at-sum'); if(el&&el.innerHTML!==s) el.innerHTML=s;
+    }
+    sum(); setInterval(sum,400);
+  }
+  try{ render(); }catch(e){}
+})();
+</script>
+<script>
+/* ══ 指板をなぞって範囲を決める（練習のポジション範囲／範囲の中で押さえ方を探す） ══
+   ・ぐるっと囲めばその内側、音の上をなぞればなぞった上の音、両方を合わせて「範囲」とする
+   ・マウス：練習ではそのままなぞれる（クリックだけなら今までどおり音の選択・解除）
+   ・スマホ、およびボイシング作成：「範囲を囲む」を押している間だけ（スクロールやセーハとぶつけない） */
+(function(){
+  var cont=document.getElementById('board-svg'); if(!cont) return;
+  // 指板を包む枠（描き直しで消えない重ね絵のため）
+  var wrap=document.createElement('div'); wrap.id='lasso-wrap';
+  cont.parentNode.insertBefore(wrap,cont); wrap.appendChild(cont);
+  var ov=document.createElementNS('http://www.w3.org/2000/svg','svg'); ov.id='lasso-ov';
+  ov.setAttribute('viewBox','0 0 '+SW+' '+SH); ov.setAttribute('aria-hidden','true'); wrap.appendChild(ov);
+  // 札と、押さえ方探しの欄
+  var bar=document.createElement('div'); bar.id='lasso-bar';
+  bar.innerHTML='<button class="seg-btn tog" id="lasso-btn" type="button">⬚ 範囲を囲む</button>'
+    +'<button class="seg-btn tog" id="lasso-clear" type="button" style="display:none">囲みを消す</button>'
+    +'<span id="lasso-info"></span>';
+  wrap.parentNode.insertBefore(bar,wrap);
+  var pane=document.createElement('div'); pane.id='lasso-pane';
+  pane.innerHTML='<button class="play-btn" id="lasso-find" type="button">この範囲で押さえ方を探す</button>'
+    +'<div id="lasso-err"></div><div id="lasso-res"></div>';
+  wrap.parentNode.insertBefore(pane,wrap.nextSibling);
+
+  var on=false, pts=null, press=null, suppressUntil=0, results=[];
+  var btn=document.getElementById('lasso-btn'), clr=document.getElementById('lasso-clear'), info=document.getElementById('lasso-info');
+
+  function ctx(){
+    if(tab==='practice') return chromaticMode?null:'practice';
+    if(tab==='viewer'&&viewMode==='voicing') return 'voicing';
+    return null;
+  }
+  function svgPt(e){ var r=cont.getBoundingClientRect(); return [(e.clientX-r.left)*SW/r.width,(e.clientY-r.top)*SH/r.height]; }
+  function cxOf(fi){ return fi===0?Sml+4:Sml+(gFp[fi-1]+gFp[fi])/2; }
+  function inPoly(x,y,P){var c=false;for(var i=0,j=P.length-1;i<P.length;j=i++){var xi=P[i][0],yi=P[i][1],xj=P[j][0],yj=P[j][1];if(((yi>y)!=(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))c=!c;}return c;}
+  function nearPath(x,y,P){for(var i=1;i<P.length;i++){var ax=P[i-1][0],ay=P[i-1][1],bx=P[i][0],by=P[i][1],dx=bx-ax,dy=by-ay,L=dx*dx+dy*dy,t=L?Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/L)):0;
+    if(Math.hypot(x-(ax+t*dx),y-(ay+t*dy))<13) return true;} return P.length===1&&Math.hypot(x-P[0][0],y-P[0][1])<13;}
+  // 囲みが閉じているか（なぞり終わりが始まりの近くに戻っている）
+  function isLoop(){ return pts&&pts.length>2&&Math.hypot(pts[0][0]-pts[pts.length-1][0],pts[0][1]-pts[pts.length-1][1])<60; }
+  // 点から囲みの線（閉じた辺も含む）までのいちばん近い距離
+  function edgeDist(x,y,P){ var m=1e9; for(var i=0;i<P.length;i++){ var a=P[i],b=P[(i+1)%P.length],dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy,t=L?Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/L)):0;
+    m=Math.min(m,Math.hypot(x-(a[0]+t*dx),y-(a[1]+t*dy))); } return m; }
+  // 囲んだ時：音の丸が線の内側にしっかり収まっているものだけ（線が丸に掛かっていれば切り捨て）
+  // 線を引くようになぞった時：なぞった上の音
+  function inside(si,fi){ if(!pts) return false; var x=cxOf(fi),y=Smt+si*SGap;
+    if(isLoop()) return inPoly(x,y,pts)&&edgeDist(x,y,pts)>=DR_SEL-2;
+    return nearPath(x,y,pts); }
+  function cells(){ var o=[]; for(var si=0;si<6;si++)for(var fi=0;fi<=SN;fi++) if(inside(si,fi)) o.push([si,fi]); return o; }
+
+  function drawOv(){
+    if(!pts||pts.length<2){ ov.innerHTML=''; return; }
+    var d=pts.map(function(p,i){return (i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ');
+    var closed=isLoop();
+    ov.innerHTML='<path d="'+d+(closed?' Z':'')+'" fill="'+(closed?'rgba(241,228,184,.08)':'none')+'" stroke="#f1e4b8" stroke-width="1.6" stroke-dasharray="5 4" stroke-linecap="round" stroke-linejoin="round"/>';
+  }
+  function refresh(){
+    var c=ctx();
+    bar.style.display=c?'flex':'none';
+    btn.classList.toggle('active',on);
+    wrap.classList.toggle('lasso-on',on&&!!c);
+    clr.style.display=pts?'':'none';
+    pane.style.display=(c==='voicing'&&chordTones)?'block':'none';
+    if(!c){ info.textContent=''; return; }
+    if(pts){
+      var cs=cells(); if(!cs.length){ info.textContent='囲みの中に音がありません'; }
+      else { var fs=cs.map(function(x){return x[1];}); var lo=Math.min.apply(null,fs),hi=Math.max.apply(null,fs);
+        info.textContent='範囲：'+(lo===0?'開放':lo+'F')+'〜'+hi+'F'; }
+    } else {
+      info.textContent=(c==='practice')?'マウスはそのまま、スマホは札を押してから指板をなぞります':'札を押してから、指板をなぞって範囲を決めます';
+    }
+  }
+  function clearLasso(){ pts=null; results=[]; document.getElementById('lasso-res').innerHTML=''; document.getElementById('lasso-err').textContent=''; drawOv(); refresh(); }
+  window.fbClearLasso=clearLasso;
+
+  btn.addEventListener('click',function(){ on=!on; refresh(); });
+  clr.addEventListener('click',clearLasso);
+
+  /* なぞる操作（指板の枠で先に受け取る） */
+  wrap.addEventListener('pointerdown',function(e){
+    var c=ctx(); if(!c) return;
+    var mouseFree=(e.pointerType==='mouse'&&c==='practice');
+    if(!on&&!mouseFree) return;
+    if(on){ e.stopPropagation(); e.preventDefault(); }   // セーハの操作・スクロールより先にこちらで受ける
+    press={id:e.pointerId,start:svgPt(e),moved:false,forced:on};
+  },true);
+  wrap.addEventListener('pointermove',function(e){
+    if(!press) return; var p=svgPt(e);
+    if(!press.moved){
+      if(Math.hypot(p[0]-press.start[0],p[1]-press.start[1])<8) return;
+      press.moved=true; pts=[press.start];
+      try{ wrap.setPointerCapture(press.id); }catch(_){}   // なぞり始めてから掴む（クリックはそのまま音へ届く） results=[]; document.getElementById('lasso-res').innerHTML=''; document.getElementById('lasso-err').textContent='';
+    }
+    var l=pts[pts.length-1]; if(Math.hypot(p[0]-l[0],p[1]-l[1])>3) pts.push(p);
+    e.preventDefault(); drawOv();
+  },true);
+  function end(){
+    if(!press) return;
+    var moved=press.moved; press=null;
+    if(!moved) return;            // 動かしていない＝ふつうのクリック（音の選択・再生）
+    suppressUntil=performance.now()+400;
+    if(!cells().length){ refresh(); return; }
+    if(ctx()==='practice') applyPractice();
+    refresh();
+  }
+  wrap.addEventListener('pointerup',end,true);
+  wrap.addEventListener('pointercancel',function(){ press=null; },true);
+  wrap.addEventListener('click',function(e){ if(performance.now()<suppressUntil){ e.stopPropagation(); e.preventDefault(); } },true);
+
+  /* 練習：囲んだフレットの幅をポジション範囲にし、囲みの外の音は選択から外す */
+  function applyPractice(){
+    if(playing||countingDown) stopPlay();
+    var cs=cells(), fs=cs.map(function(x){return x[1];});
+    var lo=Math.min.apply(null,fs), hi=Math.max.apply(null,fs);
+    document.getElementById('slider-min').value=lo; document.getElementById('slider-max').value=hi;
+    onPosSlider();                                   // 範囲を反映（範囲内をいったん全部選ぶ）
+    var keep={}; cs.forEach(function(x){ keep[selKey(x[0],x[1])]=1; });
+    Array.from(selectedSet).forEach(function(k){ if(!keep[k]) selectedSet.delete(k); });
+    buildSeq(); updateSelCount(); updateStartSlider(); updateAllStrBtn(); render();
+  }
+
+  /* ボイシング作成：囲みの中で弾ける押さえ方を探す */
+  function search(){
+    var om=omShape(), base=capoShift(), tones={}, need=[], root=chordRoot;
+    chordTones.forEach(function(ct){ tones[ct.noteIdx]=1; });
+    var omit5=chordTones.length>=4;
+    chordTones.forEach(function(ct){ if(!(omit5&&ct.degreeColorKey===7)) if(need.indexOf(ct.noteIdx)<0) need.push(ct.noteIdx); });
+    var minSnd=Math.min(4,Math.max(3,chordTones.length));
+    var opts=[]; for(var si=0;si<6;si++){ var o=[-1]; for(var fi=base;fi<=SN;fi++){ if(inside(si,fi)&&tones[((om[si]+fi)%12+12)%12]) o.push(fi); } opts.push(o); }
+    var out=[], cur=[];
+    (function rec(si){ if(si===6){ test(cur.slice()); return; } for(var k=0;k<opts[si].length;k++){ cur[si]=opts[si][k]; rec(si+1); } })(0);
+    function pc(si,f){ return ((om[si]+f)%12+12)%12; }
+    function test(v){
+      var snd=[]; for(var s=0;s<6;s++) if(v[s]>=0) snd.push(s);
+      if(snd.length<minSnd) return;
+      for(var i=1;i<snd.length;i++) if(snd[i]!==snd[i-1]+1) return;   // 鳴らす弦は途中で切れない
+      var has={}; snd.forEach(function(s){ has[pc(s,v[s])]=1; });
+      for(i=0;i<need.length;i++) if(!has[need[i]]) return;               // コードの音はすべて（4和音以上は5度を省いてよい）
+      var low=snd[snd.length-1]; if(pc(low,v[low])!==root) return;       // いちばん低い音が根音
+      var fr=snd.map(function(s){return v[s];}).filter(function(f){return f>base;});
+      var mn=fr.length?Math.min.apply(null,fr):base, mx=fr.length?Math.max.apply(null,fr):base;
+      if(mx-mn>3) return;                                                 // 開きは4フレット以内
+      var bar=fr.filter(function(f){return f===mn;}).length; if(fr.length-(bar>1?bar-1:0)>4) return; // 指は4本まで（セーハは1本）
+      out.push({v:v,cnt:snd.length,span:mx-mn,mn:mn});
+    }
+    out.sort(function(a,b){ return b.cnt-a.cnt||a.span-b.span||a.mn-b.mn; });
+    return out.slice(0,8);
+  }
+  function label(v){ return v.slice().reverse().map(function(f){return f<0?'×':String(f);}).join(' '); }
+  document.getElementById('lasso-find').addEventListener('click',function(){
+    var err=document.getElementById('lasso-err'), res=document.getElementById('lasso-res');
+    if(!chordTones){ err.textContent='先にコードを選んでください'; res.innerHTML=''; return; }
+    if(!pts||!cells().length){ err.textContent='まず「範囲を囲む」を押して、指板をなぞって範囲を決めてください'; res.innerHTML=''; return; }
+    results=search();
+    if(!results.length){ err.textContent='この範囲では押さえ方が見つかりません。範囲を広げてみてください'; res.innerHTML=''; return; }
+    err.textContent='';
+    res.innerHTML=results.map(function(r,i){ return '<button type="button" class="seg-btn view" data-i="'+i+'">'+label(r.v)+'</button>'; }).join('');
+    res.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){
+      res.querySelectorAll('button').forEach(function(x){ x.classList.remove('active'); }); b.classList.add('active');
+      applyVoicing(results[+b.getAttribute('data-i')].v);
+    }); });
+  });
+  function applyVoicing(v){
+    viewerSelectedSet.clear(); mutedStrings.clear();
+    if(typeof fingerMap!=='undefined'&&fingerMap.clear) fingerMap.clear();
+    barrePlaced=false; if(typeof barreSelKeys!=='undefined') barreSelKeys.clear();
+    for(var si=0;si<6;si++){ if(v[si]<0) mutedStrings.add(si); else viewerSelectedSet.add(selKey(si,v[si])); }
+    if(typeof updateBarreUI==='function') updateBarreUI();
+    if(typeof updateVoicingPlayBtn==='function') updateVoicingPlayBtn();
+    render();
+  }
+
+  /* 画面やモードが替わったら囲みを消す */
+  ['switchTab','setViewMode','setPracticeMode','onChordChange','setTuning'].forEach(function(n){
+    var f=window[n]; if(typeof f!=='function') return;
+    window[n]=function(){ var r=f.apply(this,arguments); clearLasso(); return r; };
+  });
+  refresh();
+})();
 </script>
 </body>
 </html>
