@@ -845,7 +845,7 @@ body,body{ background:radial-gradient(ellipse at 50% -10%,var(--sky2) 0%,var(--s
       <button class="drum-btn drum-sw" id="drum-mute" onclick="toggleDrumMute()" aria-pressed="false">🥁 ドラム <span class="sw-state" id="drum-sw-state">OFF</span></button>
       <div id="drum-status" style="font-size:11px;color:#888;margin-top:.5rem;line-height:1.5"></div>
       <div id="drum-editor-panel" class="drum-editor-panel">
-        <p class="drum-etip">セルをタップして ON/OFF。編集すると次のループから反映されます。拍子は上の設定に追従します。</p>
+        <p class="drum-etip">マスをタップしてON／OFF。再生中に変えてもすぐ反映されます。マスの数は拍子に合わせて変わります。</p>
         <div class="drum-eleg">
           <div class="drum-eli"><span class="drum-edot" style="background:#1D9E75"></span>HH（ハイハット）</div>
           <div class="drum-eli"><span class="drum-edot" style="background:#185FA5"></span>SN（スネア）</div>
@@ -958,9 +958,6 @@ const CHORD_DEFS={
 const DEGREE_COLORS={0:'#e74c3c',1:'#8b5cf6',2:'#f59e0b',3:'#10b981',4:'#3b82f6',5:'#ec4899',6:'#6366f1',7:'#f97316',8:'#14b8a6',9:'#84cc16',10:'#a855f7',11:'#0ea5e9'};
 // コードトーンの度数→DEGREE_COLORS のインデックスマッピング
 // intervalを12で割った余りをキーにする
-function chordDegreeColor(semitones){
-  return DEGREE_COLORS[semitones%12];
-}
 
 const SCALE_DEGREE_LABELS=['R','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7'];
 const NC=['#e74c3c','#e67e22','#f1c40f','#2ecc71','#1abc9c','#3498db','#9b59b6','#e91e63','#00bcd4','#8bc34a','#ff9800','#795548'];
@@ -1881,7 +1878,7 @@ function startPlay(countEndT){
   nextNoteTime=countEndT!==undefined?countEndT:actx.currentTime+0.05;
   // ドラム発進（メトロノームと同時刻・同一actxクロック）
   drumDs=0;drumNextT=nextNoteTime;
-  if(useCustom&&dpat!=='none')ensureCP();
+  ensureCP();
   schedule();
   scheduleDrums();
 }
@@ -1914,19 +1911,24 @@ const DRUM_DEFS={
 let dpat='beat8',drumDs=0,drumNextT=0,drumTimer=null;
 let drumMuted=true; // 「鳴らさない」を押している間だけ true（起動時は鳴らさない）
 // エディタ状態
-let useCustom=false,editorOpen=true,drumCur=-1; // 編集グリッドは常時表示
+let editorOpen=true,drumCur=-1; // 編集グリッドは常時表示
 const CP={}; // dpatごとのカスタムグリッド {div,HH[],SN[],BD[]}（拍数×div）
-const customized=new Set(); // 編集済みパターン名（再選択時に編集版を復元）
+const customized=new Set(); // 自分で編集したパターン名（拍子を変えたとき形を残すため）
 
 // 選択中パターンのカスタムグリッドを現在の拍数に合わせて用意（編集値は保持）
 function ensureCP(){
-  const p=dpat;if(p==='none')return null;
+  const p=dpat;
   const base=DRUM_DEFS[p],div=base.div,steps=beats*div;
   const cur=CP[p];
   if(!cur||cur.div!==div||cur.HH.length!==steps){
+    // 自分で編集した形は残し、足りない分は既定の形で埋める。
+    // 編集していないパターンは既定の形から作り直す（拍子を変えても空にならないように）
+    const keep=cur&&customized.has(p);
     const np={div,HH:[],SN:[],BD:[]};
     ['HH','SN','BD'].forEach(r=>{
-      for(let i=0;i<steps;i++) np[r].push(cur?(cur[r][i]||0):(base[r][i%base.steps]||0));
+      for(let i=0;i<steps;i++){
+        np[r].push(keep&&i<cur[r].length?cur[r][i]:(base[r][i%base.steps]||0));
+      }
     });
     CP[p]=np;
   }
@@ -2046,7 +2048,6 @@ function mdrm(t,type){
 
 // ドラム1拍あたりの刻み数
 function drumDiv(){
-  if(useCustom&&CP[dpat])return CP[dpat].div;
   const d=DRUM_DEFS[dpat];
   return d?d.div:1;
 }
@@ -2065,8 +2066,8 @@ function nextBeatInfo(){
 
 // 再生中にドラムを付けたとき：次の拍の切れ目から、小節内の位置を合わせて入る
 function alignDrumsToBeat(){
-  if(!playing||dpat==='none'||drumMuted)return;
-  if(useCustom)ensureCP();
+  if(!playing||drumMuted)return;
+  ensureCP();
   const nb=nextBeatInfo();
   drumNextT=nb.t;
   drumDs=nb.beat*drumDiv();
@@ -2074,64 +2075,27 @@ function alignDrumsToBeat(){
 
 // 繰り返しで小節の頭が戻ったとき：鳴らす時刻は動かさず、小節内の位置だけ合わせる
 function realignDrumBar(){
-  if(!playing||dpat==='none'||drumMuted||!drumTimer)return;
+  if(!playing||drumMuted||!drumTimer)return;
   const div=drumDiv(),len=beats*div,bi=60/bpm;
   const nb=nextBeatInfo();
   const st=Math.round((drumNextT-nb.t)/bi*div)+nb.beat*div;
   drumDs=((st%len)+len)%len;
 }
 
-// ドラムスケジューラ（メトロノームの四分パルス＝60/bpm に同期）
+// ドラムスケジューラ
+// 鳴らす内容はマス目（CP）だけを見る。画面に出ている形と音を常に一致させるため。
 function scheduleDrums(){
-  if(!playing||dpat==='none'||drumMuted){drumTimer=null;return;}
-  const now=actx.currentTime;
-  const bi=60/bpm;     // 四分音符＝メトロノームのクリック間隔
-  const b=beats;
-  // カスタムグリッド再生（見たまま鳴らす）
-  if(useCustom&&CP[dpat]){
-    const p=CP[dpat];
-    while(drumNextT<now+AHEAD){
-      const s=drumDs%p.HH.length;
-      if(p.HH[s])mdrm(drumNextT,'hh');
-      if(p.SN[s])mdrm(drumNextT,'sn');
-      if(p.BD[s])mdrm(drumNextT,'bd');
-      (function(t0,si){setTimeout(()=>{if(playing&&editorOpen)hlDrumStep(si);},Math.max(0,(t0-actx.currentTime)*1000));})(drumNextT,s);
-      drumDs++;drumNextT+=bi/p.div;
-    }
-    drumTimer=setTimeout(scheduleDrums,SINT);
-    return;
-  }
+  if(!playing||drumMuted){drumTimer=null;return;}
+  const p=ensureCP();
+  if(!p){drumTimer=null;return;}
+  const now=actx.currentTime,bi=60/bpm; // bi＝四分音符＝メトロノームのクリック間隔
   while(drumNextT<now+AHEAD){
-    if(dpat==='beat8'){
-      const p=DRUM_DEFS.beat8,s=drumDs%p.steps;
-      if(p.HH[s])mdrm(drumNextT,'hh');
-      if(p.SN[s])mdrm(drumNextT,'sn');
-      if(p.BD[s])mdrm(drumNextT,'bd');
-      drumDs++;drumNextT+=bi/p.div;
-    } else if(dpat==='beat16'){
-      const sub=drumDs%(b*4);
-      mdrm(drumNextT,'hh');
-      if(sub===0||sub===8) mdrm(drumNextT,'bd');
-      if(sub===4||sub===12)mdrm(drumNextT,'sn');
-      drumDs++;drumNextT+=bi/4;
-    } else if(dpat==='shuffle8'){
-      const tri=drumDs%(b*3),it=tri%3;
-      if(it===0||it===2){mdrm(drumNextT,'hh');const bx=Math.floor(tri/3);if(bx===0)mdrm(drumNextT,'bd');if(bx===1)mdrm(drumNextT,'sn');}
-      drumDs++;drumNextT+=bi/3;
-    } else if(dpat==='shuffle16'){
-      const six=drumDs%(b*6),is=six%6;
-      if(is===0||is===2||is===3||is===5){
-        mdrm(drumNextT,'hh');const bx=Math.floor(six/6);
-        if(bx===0&&is===0)mdrm(drumNextT,'bd');if(bx===1&&is===0)mdrm(drumNextT,'sn');
-      }
-      drumDs++;drumNextT+=bi/6;
-    } else if(dpat==='triplet8'){
-      const p=DRUM_DEFS.triplet8,s=drumDs%p.steps;
-      if(p.HH[s])mdrm(drumNextT,'hh');
-      if(p.SN[s])mdrm(drumNextT,'sn');
-      if(p.BD[s])mdrm(drumNextT,'bd');
-      drumDs++;drumNextT+=bi/p.div;
-    } else { break; }
+    const s=drumDs%p.HH.length;
+    if(p.HH[s])mdrm(drumNextT,'hh');
+    if(p.SN[s])mdrm(drumNextT,'sn');
+    if(p.BD[s])mdrm(drumNextT,'bd');
+    (function(t0,si){setTimeout(()=>{if(playing&&!drumMuted)hlDrumStep(si);},Math.max(0,(t0-actx.currentTime)*1000));})(drumNextT,s);
+    drumDs++;drumNextT+=bi/p.div;
   }
   drumTimer=setTimeout(scheduleDrums,SINT);
 }
@@ -2139,7 +2103,6 @@ function scheduleDrums(){
 // ── パターン作成エディタ ──
 function renderDrumGrid(){
   const tbl=document.getElementById('drum-tbl');if(!tbl)return;
-  if(dpat==='none'){tbl.innerHTML='<tr><td style="color:#888;font-size:11px;padding:8px">上でパターンを選択してください</td></tr>';return;}
   const p=ensureCP(),div=p.div,steps=p.HH.length;
   tbl.innerHTML='';
   const hdr=document.createElement('tr');
@@ -2159,7 +2122,7 @@ function renderDrumGrid(){
       td.addEventListener('click',()=>{
         p[row][i]=p[row][i]?0:1;
         td.classList.toggle(row.toLowerCase(),!!p[row][i]);
-        useCustom=true;customized.add(dpat);
+        customized.add(dpat);
       });
       tr.appendChild(td);
     }
@@ -2194,17 +2157,16 @@ function updateDrumMute(){
     : 'いまは鳴りません。上のボタンを押すとONになります。';
 }
 function resetDrumPattern(){
-  if(dpat==='none')return;
-  delete CP[dpat];customized.delete(dpat);useCustom=false;ensureCP();renderDrumGrid();
+  delete CP[dpat];customized.delete(dpat);ensureCP();renderDrumGrid();
 }
 
 // パターン選択（再生中の切替にも対応）
 function setDrum(p){
-  dpat=p;useCustom=customized.has(p); // 編集済みなら編集版を復元（グリッドと音を一致）
+  dpat=p;
   document.querySelectorAll('.drum-btn[data-drum]').forEach(b=>b.classList.toggle('on',b.dataset.drum===p));
   if(editorOpen)renderDrumGrid();
   // 再生中になし→パターンへ切替えたら、次の拍に合わせてスケジューラを再起動
-  if(playing&&p!=='none'&&!drumMuted&&!drumTimer){alignDrumsToBeat();scheduleDrums();}
+  if(playing&&!drumMuted&&!drumTimer){alignDrumsToBeat();scheduleDrums();}
 }
 
 function schedule(){
@@ -3121,7 +3083,16 @@ renderDiatonic();
       });
     }
     rs.addEventListener('change',draw); ts.addEventListener('change',draw);
-    draw(); return draw;
+    // 描き直しは中身が変わったときだけ（再生中は1音ごとに呼ばれるため）
+    var lastSig=null;
+    function drawIfChanged(){
+      var sig=[rs.value,ts.value,atView,
+        (typeof accMode!=='undefined'?accMode:''),
+        (typeof lang!=='undefined'?lang:'')].join('|');
+      if(sig===lastSig) return;
+      lastSig=sig; draw();
+    }
+    drawIfChanged(); return drawIfChanged;
   }
   var dials=[], atView='ring';
   try{ var _v=localStorage.getItem('fb_at_view'); if(_v==='keys'||_v==='ring') atView=_v; }catch(e){}
@@ -3243,7 +3214,11 @@ renderDiatonic();
     if(!press.moved){
       if(Math.hypot(p[0]-press.start[0],p[1]-press.start[1])<8) return;
       press.moved=true; pts=[press.start];
-      try{ wrap.setPointerCapture(press.id); }catch(_){}   // なぞり始めてから掴む（クリックはそのまま音へ届く） results=[]; document.getElementById('lasso-res').innerHTML=''; document.getElementById('lasso-err').textContent='';
+      try{ wrap.setPointerCapture(press.id); }catch(_){}   // なぞり始めてから掴む（クリックはそのまま音へ届く）
+      // なぞり直したら、前回の押さえ方の候補と注意書きを消す
+      results=[];
+      document.getElementById('lasso-res').innerHTML='';
+      document.getElementById('lasso-err').textContent='';
     }
     var l=pts[pts.length-1]; if(Math.hypot(p[0]-l[0],p[1]-l[1])>3) pts.push(p);
     e.preventDefault(); drawOv();
